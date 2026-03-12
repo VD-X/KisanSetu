@@ -18,13 +18,18 @@ const verifyJWT = async (req, res, next) => {
         try {
             decodedToken = jwt.verify(token, process.env.JWT_SECRET);
         } catch (jwtError) {
-            // If it fails, try Firebase
-            try {
-                decodedToken = await admin.auth().verifyIdToken(token);
-                isFirebase = true;
-            } catch (firebaseError) {
-                console.error('Token verification failed (both JWT and Firebase):', firebaseError.message);
-                return res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
+            // If it fails, try Firebase (ONLY if initialized)
+            if (admin.isReady()) {
+                try {
+                    decodedToken = await admin.auth().verifyIdToken(token);
+                    isFirebase = true;
+                } catch (firebaseError) {
+                    console.error('Token verification failed (both JWT and Firebase):', firebaseError.message);
+                    return res.status(401).json({ message: 'Unauthorized: Invalid or expired token' });
+                }
+            } else {
+                console.error('JWT verification failed and Firebase is NOT initialized. Check environment variables.');
+                return res.status(401).json({ message: 'Unauthorized: Authentication service unavailable' });
             }
         }
 
@@ -91,6 +96,10 @@ const verifyFirebaseToken = async (req, res, next) => {
     }
 
     try {
+        if (!admin.isReady()) {
+            console.error('Firebase token verification requested but Firebase is NOT initialized.');
+            return res.status(503).json({ message: 'Firebase authentication service unavailable' });
+        }
         const decodedToken = await admin.auth().verifyIdToken(token);
         req.firebaseUser = decodedToken;
         next();
@@ -125,12 +134,16 @@ const optionalJWT = async (req, res, next) => {
         try {
             decodedToken = jwt.verify(token, process.env.JWT_SECRET);
         } catch (jwtError) {
-            // If it fails, try Firebase
-            try {
-                decodedToken = await admin.auth().verifyIdToken(token);
-                isFirebase = true;
-            } catch (firebaseError) {
-                return next(); // Token invalid, proceed as guest
+            // If it fails, try Firebase (ONLY if initialized)
+            if (admin.isReady()) {
+                try {
+                    decodedToken = await admin.auth().verifyIdToken(token);
+                    isFirebase = true;
+                } catch (firebaseError) {
+                    return next(); // Token invalid, proceed as guest
+                }
+            } else {
+                return next(); // Firebase unavailable, proceed as guest
             }
         }
 

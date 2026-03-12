@@ -13,18 +13,26 @@ const firebaseAdminConfig = {
     client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL
 };
 
-// Only initialize if we have the necessary configuration
-if (process.env.FIREBASE_PROJECT_ID) {
+let isInitialized = false;
+
+// Only initialize if we have the necessary configuration and not already initialized
+if (process.env.FIREBASE_PROJECT_ID && admin.apps.length === 0) {
     try {
         admin.initializeApp({
             credential: admin.credential.cert(firebaseAdminConfig)
         });
+        isInitialized = true;
         console.log("Firebase Admin initialized successfully");
     } catch (error) {
         console.error("Firebase Admin initialization error:", error);
     }
+} else if (admin.apps.length > 0) {
+    isInitialized = true;
 } else {
-    console.warn("Firebase Admin NOT initialized: Missing configuration");
+    console.warn("Firebase Admin NOT initialized: Missing configuration (FIREBASE_PROJECT_ID)");
 }
+
+// Export a helper to check initialization
+admin.isReady = () => isInitialized;
 
 module.exports = admin;
