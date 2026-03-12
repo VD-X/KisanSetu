@@ -1,0 +1,554 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  FARMER
+  BUYER
+  TRANSPORTER
+  ADMIN
+}
+
+enum MessageStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum MessageType {
+  TEXT
+  OFFER
+}
+
+model Chat {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String   @map("orderId") @db.ObjectId
+  participants   String[] // Array of user IDs (farmer & buyer)
+  lastMessage   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  messages      Message[]
+  
+  @@map("chats")
+}
+
+model Message {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  chatId       String       @map("chatId") @db.ObjectId
+  senderId     String       @map("senderId") @db.ObjectId
+  text         String
+  type         MessageType  @default(TEXT)
+  offerAmount  Float?
+  offerStatus  MessageStatus?
+  createdAt    DateTime     @default(now())
+  
+  chat         Chat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender       User         @relation("UserMessages", fields: [senderId], references: [id])
+  
+  @@map("messages")
+}
+
+enum Language {
+  ENGLISH
+  HINDI
+  TELUGU
+  TAMIL
+  KANNADA
+}
+
+enum ImageVerificationStatus {
+  VERIFIED
+  REJECTED
+  PENDING
+  FAILED
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String?  @unique
+  password  String?
+  role      Role
+  status    String   @default("ACTIVE") // ACTIVE, PENDING_APPROVAL, SUSPENDED
+  profilePhoto String?
+  firebaseUid  String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Trust & Verification
+  isVerified     Boolean  @default(false)
+  badges         Json?    // ["Verified", "Prompt Payer", "Top Rated", "Member Since 2024"]
+  documents      Json?    // { aadhar, gst, pan } - URLs
+  
+  farmerProfile      FarmerProfile?
+  buyerProfile       BuyerProfile?
+  transporterProfile TransporterProfile?
+  
+  listings         Listing[]
+  chatsAsFarmer    NegotiatingChat[] @relation("FarmerChats")
+  chatsAsBuyer     NegotiatingChat[] @relation("BuyerChats")
+  messages         Message[]         @relation("UserMessages")
+  negotiationMessages NegotiationMessage[] @relation("UserNegotiationMessages")
+  ordersAsBuyer    Order[]           @relation("BuyerOrders")
+  ordersAsFarmer   Order[]           @relation("FarmerOrders")
+  cart             Cart?
+  deliveries       Delivery[]        @relation("TransporterDeliveries")
+  imageVerifications ImageVerification[]
+  earnings         Earning[]
+  wishlist         Wishlist?
+  wallet           Wallet?
+  notifications    Notification[]
+  
+  // Reviews Given/Received
+  reviewsGiven   Review[] @relation("Reviewer")
+  reviewsReceived Review[] @relation("Reviewee")
+  transporterReviews TransporterReview[] // Reviews given to transporters (if user is buyer/farmer)
+}
+
+model FarmerProfile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  fullName  String
+  gender    String
+  phone     String
+  landSize  Float    // in acres
+  village   String
+  district  String
+  state     String
+  language  Language @default(ENGLISH)
+  rating         Float    @default(0)
+  reviewCount    Int      @default(0)
+
+  latitude       Float?
+  longitude      Float?
+  locationSource String?
+  address        String?
+  pincode        String?
+}
+
+model BuyerProfile {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @unique @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  fullName       String
+  gender         String
+  phone          String
+  city           String
+  state          String
+  language       Language @default(ENGLISH)
+  companyName    String?
+  gstNumber      String?
+  rating         Float    @default(0)
+  reviewCount    Int      @default(0)
+  
+  // Location fields for delivery
+  latitude       Float?
+  longitude      Float?
+  locationSource String?  // "GPS" or "MANUAL"
+  address        String?
+  district       String?
+  pincode        String?
+  updatedAt      DateTime @updatedAt
+}
+
+model Review {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  reviewerId    String   @db.ObjectId
+  reviewer      User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  revieweeId    String   @db.ObjectId
+  reviewee      User     @relation("Reviewee", fields: [revieweeId], references: [id])
+  orderId       String   @unique @db.ObjectId
+  order         Order    @relation(fields: [orderId], references: [id])
+  rating        Int
+  comment       String?
+  role          Role     // Role of the reviewee (FARMER or BUYER)
+  createdAt     DateTime @default(now())
+}
+
+model TransporterProfile {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @unique @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  fullName       String
+  gender         String
+  phone          String
+  // Address Details
+  address        String?
+  city           String?
+  state          String?
+  pincode        String?
+  
+  // Fleet/Vehicle Details
+  vehicleType    String
+  vehicleNumber  String
+  capacity       Float    // Max load capacity in kg
+  pricePerKm     Float    // Cost per km
+  approvalStatus String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  language       Language @default(ENGLISH)
+
+  // Trust & Verification
+  documents      Json?    // { license, rc, insurance } - URLs
+  rating         Float    @default(0)
+  reviewCount    Int      @default(0)
+  isVerified     Boolean  @default(false)
+  
+  // Modern Logistics
+  preferredRoutes Json?   // ["Mumbai-Pune", "Nashik-Mumbai"]
+  serviceRange    Float?  // Service radius in km
+  latitude        Float?
+  longitude       Float?
+  isOnline       Boolean  @default(false)
+  reviews        TransporterReview[]
+  totalEarnings  Float    @default(0)
+}
+
+model TransporterReview {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  transporterId String   @db.ObjectId
+  transporter   TransporterProfile @relation(fields: [transporterId], references: [id])
+  reviewerId    String   @db.ObjectId
+  reviewer      User     @relation(fields: [reviewerId], references: [id])
+  deliveryId    String   @unique @db.ObjectId
+  delivery      Delivery @relation(fields: [deliveryId], references: [id])
+  rating        Int
+  comment       String?
+  createdAt     DateTime @default(now())
+}
+
+model Crop {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  category     String
+  icon         String
+  translations Json?
+  isActive     Boolean   @default(true)
+  listings     Listing[]
+  marketPrices MarketPrice[]
+}
+
+model Listing {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  farmerId      String   @db.ObjectId
+  farmer        User     @relation(fields: [farmerId], references: [id])
+  cropId        String   @db.ObjectId
+  crop          Crop     @relation(fields: [cropId], references: [id])
+  quantity      Float
+  unit          String   @default("kg")
+  expectedPrice Float
+  mandiPrice    Float?
+  msp           Float?
+  grade         String
+  harvestDate   DateTime
+  harvestType   String   @default("HARVESTED_CROP") // STANDING_CROP, HARVESTED_CROP, PROCESSED_CLEANED_CROP, SEED_NURSERY
+  images        String[]
+  status        String   @default("AVAILABLE") // AVAILABLE, PRICE_AGREED, LOCKED, IN_DELIVERY, SOLD, PAUSED
+  location      String
+  qualitySummary String?
+  saleDate      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  chats     NegotiatingChat[]
+  orders    Order[]
+  cartItems CartItem[]
+  wishlistItems WishlistItem[]
+}
+
+model NegotiatingChat {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId    String   @db.ObjectId
+  listing      Listing  @relation(fields: [listingId], references: [id])
+  buyerId      String   @db.ObjectId
+  buyer        User     @relation("BuyerChats", fields: [buyerId], references: [id])
+  farmerId     String   @db.ObjectId
+  farmer       User     @relation("FarmerChats", fields: [farmerId], references: [id])
+  requestedQuantity Float @default(0)
+  currentOffer Float
+  status       String   @default("OPEN")
+  lastMessage  String?
+  orderId      String?  @db.ObjectId
+  order        Order?   @relation(fields: [orderId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  messages NegotiationMessage[]
+  cartItems CartItem[]
+}
+
+model NegotiationMessage {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  chatId      String          @db.ObjectId
+  chat        NegotiatingChat @relation(fields: [chatId], references: [id])
+  senderId    String          @db.ObjectId
+  sender      User            @relation("UserNegotiationMessages", fields: [senderId], references: [id])
+  text        String
+  type        String          @default("TEXT")
+  offerValue  Float?
+  offerStatus String?         // "pending" | "accepted" | "rejected"
+  createdAt   DateTime        @default(now())
+
+  @@index([chatId, createdAt])
+}
+
+
+model Delivery {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderId           String    @unique @db.ObjectId
+  order             Order     @relation(fields: [orderId], references: [id])
+  transporterId     String?   @db.ObjectId
+  transporter       User?     @relation(fields: [transporterId], references: [id], name: "TransporterDeliveries")
+  declinedBy        String[]  @default([])
+  pickupLocation    Json      // { address, lat, lng }
+  dropLocation      Json      // { address, lat, lng }
+  pickupOtp         String?
+  deliveryOtp       String?
+  status            String    @default("WAITING_FOR_TRANSPORTER") // WAITING_FOR_TRANSPORTER, TRANSPORTER_ASSIGNED, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, COMPLETED
+  pricePerKm        Float
+  distance          Float
+  totalCost         Float
+  paymentStatus     String    @default("PENDING") // PENDING, HELD, RELEASED, REFUNDED
+  selectedVehicle   String?
+  estimatedDuration Int?      // minutes
+  price             Float?    // customer-facing price (overrides totalCost if set)
+  pickupTimestamp   DateTime?
+  deliveryTimestamp DateTime?
+  transporterLocation Json?      // { lat, lng }
+  tip              Float     @default(0)
+  surgeMultiplier   Float     @default(1)
+  
+  // Proof of Delivery
+  proofPhotos       String[]  @default([])
+  receiverSignature String?   // URL to signature image
+  
+  // Location Sharing Controls
+  locationSharingEnabled    Boolean  @default(true)
+  locationSharingStarted   DateTime?
+  locationSharingEnded     DateTime?
+  lastLocationUpdate     DateTime?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  earning           Earning?
+  review            TransporterReview?
+}
+
+model Earning {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  transporterId String   @db.ObjectId
+  transporter   User     @relation(fields: [transporterId], references: [id])
+  deliveryId    String   @unique @db.ObjectId
+  delivery      Delivery @relation(fields: [deliveryId], references: [id])
+  amount        Float
+  distance      Float
+  pricePerKm    Float
+  baseAmount    Float    @default(0)
+  durationMins  Int?     
+  timeAmount    Float    @default(0)
+  surgeMult     Float    @default(1)
+  surgeAmount   Float    @default(0)
+  tipAmount     Float    @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([transporterId])
+}
+
+model EarningAuditLog {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  deliveryId    String   @db.ObjectId
+  transporterId String   @db.ObjectId
+  status        String   // SUCCESS | RETRY_SCHEDULED | FAILED | DUPLICATE
+  amount        Float?
+  attempt       Int
+  error         String?
+  details       Json?
+  timestamp     DateTime @default(now())
+
+  @@index([deliveryId])
+  @@index([transporterId])
+}
+
+model MarketPrice {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  cropId     String   @db.ObjectId
+  crop       Crop     @relation(fields: [cropId], references: [id])
+  mandi      String
+  district   String?
+  state      String   @default("Andhra Pradesh")
+  variety    String?
+  min        Float
+  max        Float
+  avg        Float
+  analytics  String?
+  source     String   @default("API") // API, CSV, MANUAL
+  isOverride Boolean  @default(false)
+  date       DateTime @default(now())
+}
+
+model AdminAuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId    String   @db.ObjectId
+  action     String
+  entityType String
+  entityId   String?  @db.ObjectId
+  details    Json?
+  timestamp  DateTime @default(now())
+}
+
+model SystemSetting {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  key   String @unique
+  value Json
+}
+
+model ImageVerification {
+  id              String                 @id @default(auto()) @map("_id") @db.ObjectId
+  farmerId        String                 @db.ObjectId
+  farmer          User                   @relation(fields: [farmerId], references: [id])
+  expectedCropName String
+  imageHash       String
+  status          ImageVerificationStatus
+  stage           String?
+  detectedCrop    String?
+  confidence      Float?
+  userMessage     String?
+  visionLabels    Json?
+  summary         String?
+  grade           String?
+  gradeReason     String?
+  detailedDescription String?
+  paragraphSummary String?
+  textSymbols     Json?
+  primaryBoxes    Json?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@unique([farmerId, imageHash, expectedCropName])
+  @@index([farmerId])
+}
+
+model Order {
+  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  listingId              String   @db.ObjectId
+  listing                Listing  @relation(fields: [listingId], references: [id])
+  buyerId                String   @db.ObjectId
+  buyer                  User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  farmerId               String   @db.ObjectId
+  farmer                 User     @relation("FarmerOrders", fields: [farmerId], references: [id])
+  quantity               Float
+  priceFinal             Float
+  deliveryResponsibility String   // FARMER_ARRANGED | BUYER_ARRANGED
+  deliveryMode           String?  // SELF_PICKUP | ARRANGE_DELIVERY (only when BUYER_ARRANGED)
+  buyerPickupOtp         String?  // OTP for Buyer to show Farmer (Step 2)
+  farmerPickupOtp        String?  // OTP for Farmer to show Buyer (Step 1)
+  selfPickupStatus       String?  // PENDING, BUYER_VERIFIED, COMPLETED
+  orderStatus            String   @default("ORDER_CREATED") // ORDER_CREATED, DELIVERY_PENDING, IN_DELIVERY, AWAITING_PICKUP, COMPLETED
+  
+  // Payment & Escrow
+  paymentStatus          String   @default("PENDING") // PENDING, HELD, RELEASED, REFUNDED
+  paymentMethod          String?  // UPI, CARD, NETBANKING
+  platformFee            Float    @default(0)
+  farmerAmount           Float    @default(0)
+  transporterAmount      Float    @default(0)
+  
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  // Delivery location and distance
+  deliveryLatitude       Float?
+  deliveryLongitude      Float?
+  deliveryAddress        String?
+  distanceKm             Float?
+  estimatedDuration      Int?     // minutes
+  
+  delivery     Delivery?
+  negotiations NegotiatingChat[]
+  review       Review?
+}
+
+model Wallet {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String        @unique @db.ObjectId
+  user      User          @relation(fields: [userId], references: [id])
+  balance   Float         @default(0)
+  transactions Transaction[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  walletId    String   @db.ObjectId
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  amount      Float
+  type        String   // CREDIT, DEBIT
+  description String
+  orderId     String?  @db.ObjectId
+  status      String   @default("SUCCESS") // SUCCESS, PENDING, FAILED
+  createdAt   DateTime @default(now())
+}
+
+model Cart {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId   String     @unique @db.ObjectId
+  buyer     User       @relation(fields: [buyerId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  cartId     String    @db.ObjectId
+  cart       Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listingId  String    @db.ObjectId
+  listing    Listing   @relation(fields: [listingId], references: [id])
+  quantity   Float
+  lockedAt   DateTime?
+  negotiationId String?    @db.ObjectId
+  negotiation   NegotiatingChat? @relation(fields: [negotiationId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Wishlist {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId   String         @unique @db.ObjectId
+  buyer     User           @relation(fields: [buyerId], references: [id])
+  items     WishlistItem[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model WishlistItem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  wishlistId String   @db.ObjectId
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  listingId  String   @db.ObjectId
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([wishlistId, listingId])
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   @default("info") // info, success, warning, error
+  chatId    String?  @db.ObjectId
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}

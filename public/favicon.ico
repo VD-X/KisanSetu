@@ -1,0 +1,54 @@
+# KisanSetu - Real-Time Chat System
+
+A complete real-time chat negotiation system built with Socket.IO, React, and MongoDB.
+
+## 🚀 Features
+
+- **Real-time messaging** between farmers and buyers
+- **Price negotiation** with offer/accept/reject functionality  
+- **WhatsApp-like interface** with timestamps and message grouping
+- **MongoDB persistence** with proper indexing
+- **Socket.IO integration** for instant updates
+- **Production-ready architecture** with error handling
+
+## 🛠 Tech Stack
+
+- **Frontend**: React, Socket.IO client, Tailwind CSS
+- **Backend**: Node.js, Express, Socket.IO, MongoDB (Prisma)
+- **Database**: MongoDB with Chat and Message models
+
+## 📱 Quick Start
+
+1. **Install dependencies**: `npm install` in both frontend and backend
+2. **Start backend**: `npm run dev` in backend folder
+3. **Start frontend**: `npm run dev` in root folder
+4. **Access chat**: Navigate to `/chat` in browser
+
+## 🎯 API Endpoints
+
+- `GET /api/chat/user` - Get all user chats
+- `GET /api/chat/:chatId/messages` - Get chat messages
+- `POST /api/chat/send` - Send message
+- `PUT /api/chat/offer/:messageId/respond` - Respond to offer
+
+## 📁 Components Created
+
+- **Chat.tsx** - Complete WhatsApp-like chat interface
+- **ChatList.tsx** - Conversation list with real-time updates
+- **MessageSender.tsx** - Send normal messages
+- **OfferSender.tsx** - Send price offers
+- **MessageReceiver.tsx** - Receive messages and updates
+- **DateTimeFormatter.tsx** - Date/time formatting utilities
+
+## 🔄 Real-Time Features
+
+- Instant message delivery
+- Live offer status updates
+- Auto-scroll to latest messages
+- Connection status indicators
+- Typing indicators (infrastructure ready)
+- Message history persistence
+
+## 🎯 Production Ready
+
+The system is fully implemented with comprehensive error handling, security measures, and scalable architecture ready for production deployment!

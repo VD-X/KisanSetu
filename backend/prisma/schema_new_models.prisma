@@ -1,0 +1,63 @@
+// New models to be added to schema.prisma after line 102
+
+model Order {
+  id                     String   @id @default(uuid())
+  listingId              String
+  listing                Listing  @relation(fields: [listingId], references: [id])
+  buyerId                String
+  buyer                  User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  farmerId               String
+  farmer                 User     @relation("FarmerOrders", fields: [farmerId], references: [id])
+  quantity               Float
+  priceFinal             Float
+  deliveryResponsibility String   // FARMER_ARRANGED | BUYER_ARRANGED
+  orderStatus            String   @default("ORDER_CREATED") // ORDER_CREATED, DELIVERY_PENDING, IN_DELIVERY, COMPLETED
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  delivery     DeliveryDeal?
+  cartItem     CartItem?
+  negotiation  NegotiatingChat?
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  buyerId   String     @unique
+  buyer     User       @relation(fields: [buyerId], references: [id])
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id         String    @id @default(uuid())
+  cartId     String
+  cart       Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listingId  String
+  listing    Listing   @relation(fields: [listingId], references: [id])
+  quantity   Float
+  lockedAt   DateTime?
+  orderId    String?   @unique
+  order      Order?    @relation(fields: [orderId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model DeliveryDeal {
+  id                String    @id @default(uuid())
+  orderId           String    @unique
+  order             Order     @relation(fields: [orderId], references: [id])
+  transporterId     String?
+  transporter       User?     @relation(fields: [transporterId], references: [id])
+  pickupLocation    Json      // { address, lat, lng }
+  dropLocation      Json      // { address, lat, lng }
+  pickupOtp         String?
+  status            String    @default("WAITING_FOR_TRANSPORTER") // WAITING_FOR_TRANSPORTER, TRANSPORTER_ASSIGNED, PICKED_UP, IN_TRANSIT, DELIVERED, COMPLETED
+  pricePerKm        Float
+  distance          Float
+  totalCost         Float
+  pickupTimestamp   DateTime?
+  deliveryTimestamp DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}

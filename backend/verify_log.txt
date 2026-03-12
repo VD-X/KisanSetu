@@ -1,0 +1,89 @@
+--- Starting Delivery Cost Verification ---
+Verification Failed!
+Error Message: 
+Invalid `prisma.order.findFirst()` invocation in
+C:\Users\manik\Dropbox\projects_copy\KisanSetu\backend\scripts\verify-delivery-cost.js:20:40
+
+  17 
+  18 // 1. Find a test order (or create a dummy one if needed, but finding is safer for now)
+  19 // We need an order that doesn't have a delivery yet.
+→ 20 let order = await prisma.order.findFirst(
+Inconsistent query result: Field listing is required to return data, got `null` instead.
+Error Code: undefined
+--- Starting Delivery Cost Verification ---
+Creating fresh test data...
+Created dummy listing: 69949dfddb7382dc11d87c04
+Created dummy order: 69949dfddb7382dc11d87c05
+Simulating Delivery Deal creation with:
+- Distance: 50km
+- Rate: ₹10/km
+- Frontend Calculated Cost: ₹750 (Should be preserved)
+- Backend Simple Calc would be: ₹500
+Transporter found: 6992bc24bd6e9417d129f585
+Creating delivery with data: {
+  "orderId": "69949dfddb7382dc11d87c05",
+  "pickupLocation": {
+    "address": "Test Pickup",
+    "lat": 10,
+    "lng": 10
+  },
+  "dropLocation": {
+    "address": "Test Drop",
+    "lat": 10.5,
+    "lng": 10.5
+  },
+  "pricePerKm": 10,
+  "distance": 50,
+  "totalCost": 750,
+  "status": "COMPLETED",
+  "transporterId": "6992bc24bd6e9417d129f585"
+}
+Delivery created: 69949dfddb7382dc11d87c06
+Stored totalCost: 750
+SUCCESS: Delivery totalCost matches input.
+Triggering Earnings Update...
+Verification Failed!
+Error Message: 
+Invalid `tx.transaction.create()` invocation in
+C:\Users\manik\Dropbox\projects_copy\KisanSetu\backend\src\services\walletService.js:28:50
+
+  25     }
+  26 });
+  27 
+→ 28 const transaction = await tx.transaction.create(
+Inconsistent column data: Malformed ObjectID: invalid character 'T' was found at index 0 in the provided hex string: "TRANS_CREDIT" for the field 'orderId'.
+Error Code: P2023
+--- Starting Delivery Cost Verification ---
+Creating fresh test data...
+Created dummy listing: 69949e27d57551e0bb4649a7
+Created dummy order: 69949e27d57551e0bb4649a8
+Simulating Delivery Deal creation with:
+- Distance: 50km
+- Rate: ₹10/km
+- Frontend Calculated Cost: ₹750 (Should be preserved)
+- Backend Simple Calc would be: ₹500
+Transporter found: 6992bc24bd6e9417d129f585
+Creating delivery with data: {
+  "orderId": "69949e27d57551e0bb4649a8",
+  "pickupLocation": {
+    "address": "Test Pickup",
+    "lat": 10,
+    "lng": 10
+  },
+  "dropLocation": {
+    "address": "Test Drop",
+    "lat": 10.5,
+    "lng": 10.5
+  },
+  "pricePerKm": 10,
+  "distance": 50,
+  "totalCost": 750,
+  "status": "COMPLETED",
+  "transporterId": "6992bc24bd6e9417d129f585"
+}
+Delivery created: 69949e27d57551e0bb4649a9
+Stored totalCost: 750
+SUCCESS: Delivery totalCost matches input.
+Triggering Earnings Update...
+Earning record created: {"id":"69949e28d57551e0bb4649aa","transporterId":"6992bc24bd6e9417d129f585","deliveryId":"69949e27d57551e0bb4649a9","amount":750,"distance":50,"pricePerKm":10,"baseAmount":750,"durationMins":null,"timeAmount":0,"surgeMult":1,"surgeAmount":0,"tipAmount":0,"createdAt":"2026-02-17T16:58:16.036Z"}
+SUCCESS: Earning baseAmount matches delivery totalCost.

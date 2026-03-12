@@ -1,0 +1,8 @@
+{
+  "name": "KisanSetu - Farmer Marketplace",
+  "description": "A production-ready marketplace for Indian farmers to sell crops directly to buyers with transparent pricing, structured negotiation, and integrated logistics.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

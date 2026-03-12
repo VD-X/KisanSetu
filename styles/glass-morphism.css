@@ -1,0 +1,205 @@
+/* Glass Morphism Effects - iOS 26 Style */
+@layer components {
+    /* Liquid Glass Container */
+    .glass-container {
+        @apply backdrop-blur-3xl bg-white/10 border border-white/20 rounded-3xl;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        -webkit-backdrop-filter: blur(4px);
+        backdrop-filter: blur(4px);
+    }
+
+    .glass-container-hover {
+        @apply glass-container hover:bg-white/15 hover:border-white/30 transition-all duration-300;
+    }
+
+    /* Premium Glass - Darker Background */
+    .glass-premium {
+        @apply backdrop-blur-2xl bg-black/40 border border-white/10 rounded-3xl;
+        box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* Glass Badge */
+    .glass-badge {
+        @apply backdrop-blur-lg bg-white/15 border border-white/30 rounded-2xl px-4 py-2;
+        box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.15);
+    }
+
+    /* Frosted Glass Card */
+    .glass-card {
+        @apply relative backdrop-blur-2xl bg-gradient-to-br from-white/20 to-white/5 border border-white/20 rounded-3xl overflow-hidden;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .glass-card::before {
+        content: '';
+        @apply absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl;
+    }
+
+    /* Gradient Overlay for Selection */
+    .glass-selected {
+        @apply bg-gradient-to-r from-blue-500/30 to-indigo-500/30 border-blue-400/60;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    /* Animation Classes */
+    @keyframes pulse-glow {
+        0%, 100% {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        50% {
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+        }
+    }
+
+    .animate-pulse-glow {
+        animation: pulse-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Smooth Transitions */
+    .transition-glass {
+        @apply transition-all duration-300 ease-out;
+    }
+
+    /* Text Glass Effect */
+    .text-glass {
+        @apply text-white drop-shadow-sm;
+    }
+
+    /* Backdrop Blur Variations */
+    .backdrop-xs {
+        -webkit-backdrop-filter: blur(2px);
+        backdrop-filter: blur(2px);
+    }
+
+    .backdrop-sm {
+        -webkit-backdrop-filter: blur(4px);
+        backdrop-filter: blur(4px);
+    }
+
+    .backdrop-md {
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
+
+    .backdrop-lg {
+        -webkit-backdrop-filter: blur(16px);
+        backdrop-filter: blur(16px);
+    }
+
+    .backdrop-xl {
+        -webkit-backdrop-filter: blur(24px);
+        backdrop-filter: blur(24px);
+    }
+
+    /* Gradient Meshes */
+    .gradient-mesh {
+        background: linear-gradient(
+            135deg,
+            rgba(59, 130, 246, 0.1) 0%,
+            rgba(99, 102, 241, 0.05) 25%,
+            rgba(168, 85, 247, 0.05) 50%,
+            rgba(236, 72, 153, 0.1) 100%
+        );
+    }
+
+    /* iOS-style Shadows */
+    .shadow-ios {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .shadow-ios-lg {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                    0 20px 20px -10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Glowing Borders */
+    .border-glow {
+        @apply border border-white/20;
+        box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.2),
+                    0 0 20px rgba(255, 255, 255, 0.05);
+    }
+
+    /* Scroll Behavior */
+    .smooth-scroll {
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    /* Responsive Glass */
+    @media (max-width: 768px) {
+        .glass-container {
+            @apply rounded-2xl;
+        }
+        .glass-card {
+            @apply rounded-2xl;
+        }
+    }
+
+    /* Dark Mode Optimization */
+    @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+        .glass-modern {
+            @apply glass-container;
+        }
+    }
+}
+
+/* Smooth Animations */
+@layer utilities {
+    /* Fade In */
+    .animate-fade-in {
+        animation: fade-in 0.5s ease-out;
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Scale In */
+    .animate-scale-in {
+        animation: scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes scale-in {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Slide Up */
+    .animate-slide-up {
+        animation: slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slide-up {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
