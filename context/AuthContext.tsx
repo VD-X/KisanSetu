@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth } from '../firebaseConfig';
 import { onIdTokenChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { API_URL } from '../services/api';
 
 // Define the User type strictly according to the backend
 export type Role = 'FARMER' | 'BUYER' | 'TRANSPORTER' | 'ADMIN';
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 // Fetch full user profile from backend to sync
                 try {
-                    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/me`, {
+                    const response = await fetch(`${API_URL}/auth/me`, {
                         headers: {
                             'Authorization': `Bearer ${idToken}`
                         }
@@ -107,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const refreshUser = async () => {
         if (!token) return;
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/me`, {
+            const response = await fetch(`${API_URL}/auth/me`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

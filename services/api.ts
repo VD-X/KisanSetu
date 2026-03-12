@@ -1,5 +1,5 @@
 const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const API_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/+$/, '')}/api`;
+export const API_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/+$/, '')}/api`;
 
 import { auth } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';

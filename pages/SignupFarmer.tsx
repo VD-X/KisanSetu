@@ -4,13 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { useRoleTranslate } from '../hooks/useRoleTranslate';
 import { auth } from '../firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { API_URL } from '../services/api';
 import LocationPicker from '../components/LocationPicker';
 import ModernDropdown from '../components/common/ModernDropdown';
 
 const SignupFarmer: React.FC = () => {
     const { t } = useRoleTranslate();
-    const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const apiBase = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/+$/, '')}/api`;
+    const apiBase = API_URL;
     const navigate = useNavigate();
     const { login } = useAuth();
     const [loading, setLoading] = useState(false);

@@ -5,6 +5,7 @@ import { useAuth, Role } from '../context/AuthContext';
 import { useRoleTranslate } from '../hooks/useRoleTranslate';
 import ModernDropdown from '../components/common/ModernDropdown';
 import { auth } from '../firebaseConfig';
+import { API_URL } from '../services/api';
 import {
     GoogleAuthProvider,
     signInWithPopup,
@@ -14,8 +15,7 @@ import {
 
 const Login = () => {
     const { t } = useRoleTranslate();
-    const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const apiBase = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/+$/, '')}/api`;
+    const apiBase = API_URL;
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

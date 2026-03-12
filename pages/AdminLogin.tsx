@@ -3,11 +3,11 @@ import { ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useRoleTranslate } from '../hooks/useRoleTranslate';
+import { API_URL } from '../services/api';
 
 const AdminLogin = () => {
     const { t } = useRoleTranslate();
-    const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const apiBase = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/+$/, '')}/api`;
+    const apiBase = API_URL;
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
