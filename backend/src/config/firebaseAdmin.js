@@ -9,14 +9,26 @@ const getCleanPrivateKey = (key) => {
     // 2. Unescape literal \n strings to actual newlines
     cleaned = cleaned.replace(/\\n/g, '\n');
     
-    // 3. Normalize headers/footers and ensure proper line breaks for PEM
-    // Some env variables strip whitespace or compress lines; we must ensure
-    // the header and footer are on their own lines.
-    if (!cleaned.includes('\n') && cleaned.includes('-----BEGIN PRIVATE KEY-----')) {
-        // This is a compressed key (one-liner)
-        cleaned = cleaned
-            .replace('-----BEGIN PRIVATE KEY-----', '-----BEGIN PRIVATE KEY-----\n')
-            .replace('-----END PRIVATE KEY-----', '\n-----END PRIVATE KEY-----');
+    // 3. If it doesn't have enough newlines, it might be a compressed one-liner
+    // A valid PEM private key should have multiple newlines.
+    if ((cleaned.match(/\n/g) || []).length < 2) {
+        const header = '-----BEGIN PRIVATE KEY-----';
+        const footer = '-----END PRIVATE KEY-----';
+        
+        if (cleaned.includes(header) && cleaned.includes(footer)) {
+            // Extract the core base64 part
+            let core = cleaned
+                .replace(header, '')
+                .replace(footer, '')
+                .replace(/\s/g, ''); // Remove all whitespace
+            
+            // Rebuild with proper 64-character line breaks
+            const chunks = [];
+            for (let i = 0; i < core.length; i += 64) {
+                chunks.push(core.substring(i, i + 64));
+            }
+            cleaned = `${header}\n${chunks.join('\n')}\n${footer}\n`;
+        }
     }
     
     return cleaned;
@@ -63,5 +75,10 @@ if (process.env.FIREBASE_PROJECT_ID && admin.apps.length === 0) {
 // Export a helper to check initialization
 admin.isReady = () => isInitialized;
 admin.getError = () => initializationError;
+admin.getDiagnostic = () => ({
+    keyExists: !!process.env.FIREBASE_PRIVATE_KEY,
+    keyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
+    keyPrefix: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.substring(0, 10) + "..." : "none"
+});
 
 module.exports = admin;

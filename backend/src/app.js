@@ -71,6 +71,7 @@ app.get('/api/health', async (req, res) => {
             database: 'Connected',
             firebaseReady: admin.isReady(),
             firebaseError: admin.getError(),
+            firebaseDiagnostic: admin.getDiagnostic(),
             timestamp: new Date().toISOString()
         });
     } catch (error) {
@@ -80,6 +81,7 @@ app.get('/api/health', async (req, res) => {
             database: 'Disconnected',
             firebaseReady: admin.isReady(),
             firebaseError: admin.getError(),
+            firebaseDiagnostic: admin.getDiagnostic(),
             error: error.message 
         });
     }
