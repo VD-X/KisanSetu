@@ -14,6 +14,7 @@ const firebaseAdminConfig = {
 };
 
 let isInitialized = false;
+let initializationError = null;
 
 // Only initialize if we have the necessary configuration and not already initialized
 if (process.env.FIREBASE_PROJECT_ID && admin.apps.length === 0) {
@@ -24,15 +25,21 @@ if (process.env.FIREBASE_PROJECT_ID && admin.apps.length === 0) {
         isInitialized = true;
         console.log("Firebase Admin initialized successfully");
     } catch (error) {
+        initializationError = error.message;
         console.error("Firebase Admin initialization error:", error);
     }
 } else if (admin.apps.length > 0) {
     isInitialized = true;
 } else {
-    console.warn("Firebase Admin NOT initialized: Missing configuration (FIREBASE_PROJECT_ID)");
+    const missing = [];
+    if (!process.env.FIREBASE_PROJECT_ID) missing.push("FIREBASE_PROJECT_ID");
+    if (!process.env.FIREBASE_PRIVATE_KEY) missing.push("FIREBASE_PRIVATE_KEY");
+    initializationError = missing.length > 0 ? `Missing: ${missing.join(', ')}` : "Unknown reason";
+    console.warn("Firebase Admin NOT initialized:", initializationError);
 }
 
 // Export a helper to check initialization
 admin.isReady = () => isInitialized;
+admin.getError = () => initializationError;
 
 module.exports = admin;

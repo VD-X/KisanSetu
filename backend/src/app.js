@@ -64,12 +64,13 @@ app.get('/api/health', async (req, res) => {
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
     try {
-        await prisma.$queryRaw`SELECT 1`;
+        await prisma.user.count();
         res.json({ 
             status: 'OK', 
             message: 'Server is running',
             database: 'Connected',
             firebaseReady: admin.isReady(),
+            firebaseError: admin.getError(),
             timestamp: new Date().toISOString()
         });
     } catch (error) {
@@ -78,6 +79,7 @@ app.get('/api/health', async (req, res) => {
             message: 'Database check failed',
             database: 'Disconnected',
             firebaseReady: admin.isReady(),
+            firebaseError: admin.getError(),
             error: error.message 
         });
     }
