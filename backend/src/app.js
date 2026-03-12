@@ -59,6 +59,30 @@ app.get('/api', (req, res) => {
     res.json({ message: 'KisanSetu API is running correctly' });
 });
 
+app.get('/api/health', async (req, res) => {
+    const admin = require('./config/firebaseAdmin');
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        res.json({ 
+            status: 'OK', 
+            message: 'Server is running',
+            database: 'Connected',
+            firebaseReady: admin.isReady(),
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'ERROR', 
+            message: 'Database check failed',
+            database: 'Disconnected',
+            firebaseReady: admin.isReady(),
+            error: error.message 
+        });
+    }
+});
+
 // Auth Routes
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
@@ -119,9 +143,6 @@ app.use('/api/location', locationRoutes);
 const routeRoutes = require('./routes/routeRoutes');
 app.use('/api/route', routeRoutes);
 
-// Health Check Route
-const healthRoutes = require('./routes/healthRoutes');
-app.use('/api/health', healthRoutes);
 
 // Wallet Routes
 const walletRoutes = require('./routes/walletRoutes');
