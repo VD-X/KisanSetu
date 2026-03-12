@@ -11,14 +11,4 @@ router.post('/otpless-login', otplessLogin);
 router.get('/me', verifyJWT, getMe);
 router.put('/profile', verifyJWT, updateProfile);
 
-const admin = require('../config/firebaseAdmin');
-
-router.get('/status', (req, res) => {
-    res.json({
-        service: 'auth',
-        firebaseReady: admin.isReady(),
-        time: new Date().toISOString()
-    });
-});
-
 module.exports = router;
