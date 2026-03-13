@@ -6,29 +6,27 @@ const getCleanPrivateKey = (key) => {
     // 1. Remove surrounding quotes and trim
     let cleaned = key.trim().replace(/^"|"$/g, '');
     
-    // 2. Unescape literal \n strings to actual newlines
-    cleaned = cleaned.replace(/\\n/g, '\n');
+    // 2. Handle escaped newlines (both literal and from env vars)
+    cleaned = cleaned.replace(/\\n/g, '\n').replace(/\\r/g, '');
     
-    // 3. If it doesn't have enough newlines, it might be a compressed one-liner
-    // A valid PEM private key should have multiple newlines.
-    if ((cleaned.match(/\n/g) || []).length < 2) {
-        const header = '-----BEGIN PRIVATE KEY-----';
-        const footer = '-----END PRIVATE KEY-----';
+    // 3. Absolute PEM Restorer: Rebuild the key from its base64 core.
+    // This handles cases where the key has non-standard line breaks or extra spaces.
+    const header = '-----BEGIN PRIVATE KEY-----';
+    const footer = '-----END PRIVATE KEY-----';
+    
+    if (cleaned.includes(header) && cleaned.includes(footer)) {
+        // Extract ONLY the base64 body (strip headers, footers, and ALL whitespace)
+        const core = cleaned
+            .replace(header, '')
+            .replace(footer, '')
+            .replace(/[\s\r\n]/g, ''); // Strip all hidden characters
         
-        if (cleaned.includes(header) && cleaned.includes(footer)) {
-            // Extract the core base64 part
-            let core = cleaned
-                .replace(header, '')
-                .replace(footer, '')
-                .replace(/\s/g, ''); // Remove all whitespace
-            
-            // Rebuild with proper 64-character line breaks
-            const chunks = [];
-            for (let i = 0; i < core.length; i += 64) {
-                chunks.push(core.substring(i, i + 64));
-            }
-            cleaned = `${header}\n${chunks.join('\n')}\n${footer}\n`;
+        // Reconstruct with precise 64-character line breaks (PEM strict standard)
+        const chunks = [];
+        for (let i = 0; i < core.length; i += 64) {
+            chunks.push(core.substring(i, i + 64));
         }
+        return `${header}\n${chunks.join('\n')}\n${footer}\n`;
     }
     
     return cleaned;
