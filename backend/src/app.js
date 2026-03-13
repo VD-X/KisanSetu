@@ -67,7 +67,7 @@ app.get('/api/health', async (req, res) => {
         await prisma.user.count();
         res.json({ 
             status: 'OK', 
-            version: 'v2',
+            version: 'v3',
             message: 'Server is running',
             database: 'Connected',
             firebaseReady: admin.isReady(),
@@ -78,7 +78,7 @@ app.get('/api/health', async (req, res) => {
     } catch (error) {
         res.status(500).json({ 
             status: 'ERROR', 
-            version: 'v2',
+            version: 'v3',
             message: 'Database check failed',
             database: 'Disconnected',
             firebaseReady: admin.isReady(),

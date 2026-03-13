@@ -1,5 +1,7 @@
 const admin = require("firebase-admin");
 
+let cleanedKeyLength = 0;
+
 const getCleanPrivateKey = (key) => {
     if (!key) return undefined;
     
@@ -10,25 +12,23 @@ const getCleanPrivateKey = (key) => {
     cleaned = cleaned.replace(/\\n/g, '\n').replace(/\\r/g, '');
     
     // 3. Absolute PEM Restorer: Rebuild the key from its base64 core.
-    // This handles cases where the key has non-standard line breaks or extra spaces.
     const header = '-----BEGIN PRIVATE KEY-----';
     const footer = '-----END PRIVATE KEY-----';
     
     if (cleaned.includes(header) && cleaned.includes(footer)) {
-        // Extract ONLY the base64 body (strip headers, footers, and ALL whitespace)
         const core = cleaned
             .replace(header, '')
             .replace(footer, '')
-            .replace(/[\s\r\n]/g, ''); // Strip all hidden characters
+            .replace(/[\s\r\n]/g, '');
         
-        // Reconstruct with precise 64-character line breaks (PEM strict standard)
         const chunks = [];
         for (let i = 0; i < core.length; i += 64) {
             chunks.push(core.substring(i, i + 64));
         }
-        return `${header}\n${chunks.join('\n')}\n${footer}\n`;
+        cleaned = `${header}\n${chunks.join('\n')}\n${footer}\n`;
     }
     
+    cleanedKeyLength = cleaned.length;
     return cleaned;
 };
 
@@ -76,6 +76,7 @@ admin.getError = () => initializationError;
 admin.getDiagnostic = () => ({
     keyExists: !!process.env.FIREBASE_PRIVATE_KEY,
     keyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
+    cleanedKeyLength: cleanedKeyLength,
     keyPrefix: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.substring(0, 10) + "..." : "none"
 });
 
