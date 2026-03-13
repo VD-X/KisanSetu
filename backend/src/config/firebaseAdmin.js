@@ -17,9 +17,9 @@ const getCleanPrivateKey = (key) => {
     
     if (cleaned.includes(header) && cleaned.includes(footer)) {
         const core = cleaned
-            .replace(header, '')
-            .replace(footer, '')
-            .replace(/[\s\r\n]/g, '');
+            .split(header)[1]
+            .split(footer)[0]
+            .replace(/[^A-Za-z0-9+/=]/g, ''); // EXPLICIT: Keep ONLY valid base64 chars
         
         const chunks = [];
         for (let i = 0; i < core.length; i += 64) {
@@ -77,7 +77,8 @@ admin.getDiagnostic = () => ({
     keyExists: !!process.env.FIREBASE_PRIVATE_KEY,
     keyLength: process.env.FIREBASE_PRIVATE_KEY?.length || 0,
     cleanedKeyLength: cleanedKeyLength,
-    keyPrefix: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.substring(0, 10) + "..." : "none"
+    keyPrefix: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.substring(0, 15) : "none",
+    keySuffix: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.slice(-15) : "none"
 });
 
 module.exports = admin;
