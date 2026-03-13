@@ -214,7 +214,7 @@ const login = async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
 
@@ -360,6 +360,14 @@ const firebaseLogin = async (req, res) => {
 
     if (!idToken || !role) {
         return res.status(400).json({ message: 'idToken and role are required' });
+    }
+
+    if (!admin.isReady()) {
+        console.error('Firebase Login failed: Firebase Admin is not initialized');
+        return res.status(503).json({ 
+            message: 'Authentication service (Firebase) is currently unavailable. Please check backend configuration.',
+            error: admin.getError()
+        });
     }
 
     try {
@@ -578,7 +586,7 @@ const adminLogin = async (req, res) => {
         });
     } catch (error) {
         console.error('Admin login error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
 
