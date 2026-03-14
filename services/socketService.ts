@@ -2,6 +2,7 @@ import { io, Socket } from 'socket.io-client';
 
 class SocketService {
     private socket: Socket | null = null;
+    private userId: string | null = null;
     private readonly serverUrl: string;
 
     constructor() {
@@ -11,6 +12,15 @@ class SocketService {
 
     connect(): void {
         if (this.socket?.connected) {
+            // If already connected but userId is set and not identified, identify now
+            if (this.userId) {
+                this.socket.emit('identify', this.userId);
+            }
+            return;
+        }
+
+        if (this.socket) {
+            this.socket.connect();
             return;
         }
 
@@ -19,19 +29,23 @@ class SocketService {
             withCredentials: true,
             reconnection: true,
             reconnectionDelay: 1000,
-            reconnectionAttempts: 5
+            reconnectionAttempts: 10 // Increased for better stability
         });
 
         const socket = this.socket;
         this.socket.on('connect', () => {
-            // Optional: set VITE_DEBUG_SOCKET=1 to log connection
-            if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_SOCKET === '1') {
-                console.log('WebSocket connected:', socket.id ?? '');
+            console.log('WebSocket connected:', socket.id ?? '');
+            
+            // Auto-identify if we have a userId
+            if (this.userId) {
+                console.log('Auto-identifying user:', this.userId);
+                socket.emit('identify', this.userId);
+                socket.emit('join-user-room', this.userId);
             }
         });
 
-        // In DEV, log only non–high-frequency events (skip locationUpdate / etaUpdate)
-        if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_SOCKET === '1') {
+        // In DEV, log all events
+        if (import.meta.env.DEV) {
             const quietEvents = new Set(['locationUpdate', 'etaUpdate']);
             this.socket.onAny((event, ...args) => {
                 if (!quietEvents.has(event)) {
@@ -40,16 +54,12 @@ class SocketService {
             });
         }
 
-        this.socket.on('disconnect', () => {
-            if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_SOCKET === '1') {
-                console.log('WebSocket disconnected');
-            }
+        this.socket.on('disconnect', (reason) => {
+            console.log('WebSocket disconnected:', reason);
         });
 
-        this.socket.on('connect_error', () => {
-            if (import.meta.env.DEV) {
-                console.warn('WebSocket unavailable (is the backend running?)');
-            }
+        this.socket.on('connect_error', (error) => {
+            console.warn('WebSocket connection error:', error.message);
         });
     }
 
@@ -97,8 +107,17 @@ class SocketService {
     }
 
     identify(userId: string): void {
-        if (this.socket && userId) {
-            this.socket.emit('identify', userId);
+        console.log('Identifying user in socketService:', userId);
+        this.userId = userId;
+        if (this.socket) {
+            if (!this.socket.connected) {
+                this.connect();
+            } else {
+                this.socket.emit('identify', userId);
+                this.socket.emit('join-user-room', userId);
+            }
+        } else {
+            this.connect();
         }
     }
 

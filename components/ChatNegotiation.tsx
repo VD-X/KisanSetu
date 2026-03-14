@@ -160,6 +160,10 @@ const ChatNegotiation: React.FC<ChatNegotiationProps> = ({
 
   // ─── Socket listeners ──────────────────────────────────────────────
   useEffect(() => {
+    if (!chatId || !userId) return;
+
+    // Ensure we are connected and identified
+    socketService.identify(userId);
     socketService.joinNegotiationRoom(chatId);
 
     const handleMessage = (msg: NegotiationMessage) => {

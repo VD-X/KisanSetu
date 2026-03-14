@@ -29,9 +29,15 @@ const initSocket = (server) => {
 
         // --- User Identification ---
         socket.on("identify", (userId) => {
+            if (!userId) return;
+            
+            // If user was previously mapped to this socket, just refresh
+            // If they are on a new socket, update the map
             userMap.set(userId, socket.id);
-            console.log(`Mapped User ${userId} to Socket ${socket.id}`);
-            socket.join(`user-${userId}`); // Join a personal room
+            console.log(`[Socket] User ${userId} identified on socket ${socket.id}`);
+            
+            // Join a personal room for targeted notifications
+            socket.join(`user-${userId}`); 
         });
 
 
@@ -291,11 +297,16 @@ const initSocket = (server) => {
         });
 
 
-        socket.on("disconnect", () => {
-            console.log(`Socket disconnected: ${socket.id}`);
-            // Remove from maps if needed
+        socket.on("disconnect", (reason) => {
+            console.log(`Socket disconnected: ${socket.id} (${reason})`);
+            // Cleanup: find the user who owned this socket and remove from map
+            // Note: Map.entries() is not efficient for large numbers, but fine for this scale
             for (const [uid, sid] of userMap.entries()) {
-                if (sid === socket.id) userMap.delete(uid);
+                if (sid === socket.id) {
+                    userMap.delete(uid);
+                    console.log(`[Socket] Cleaned up user mapping for ${uid}`);
+                    break;
+                }
             }
         });
     });
