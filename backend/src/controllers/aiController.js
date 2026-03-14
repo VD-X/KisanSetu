@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const crypto = require('crypto');
 const { analyzeCropImages, callNvidiaChat } = require('../services/nvidiaVisionService');
 const marketPriceService = require('../services/marketPriceService');

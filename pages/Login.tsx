@@ -29,8 +29,15 @@ const Login = () => {
         { id: 'TRANSPORTER' as Role, label: 'Transporter', icon: Truck, color: 'text-orange-600', bg: 'bg-orange-100', border: 'border-orange-200' },
     ];
 
-    const { login } = useAuth();
+    const { user, login } = useAuth();
     const navigate = useNavigate();
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (user) {
+            redirectUser(user.role);
+        }
+    }, [user]);
 
     // Simplified: No special effects needed for email-only login
 
@@ -115,12 +122,13 @@ const Login = () => {
     };
 
     const redirectUser = (userRole: Role) => {
+        const options = { replace: true };
         switch (userRole) {
-            case 'FARMER': navigate('/farmer/dashboard'); break;
-            case 'BUYER': navigate('/buyer/dashboard'); break;
-            case 'TRANSPORTER': navigate('/transporter/dashboard'); break;
-            case 'ADMIN': navigate('/admin/dashboard'); break;
-            default: navigate('/');
+            case 'FARMER': navigate('/farmer/dashboard', options); break;
+            case 'BUYER': navigate('/buyer/dashboard', options); break;
+            case 'TRANSPORTER': navigate('/transporter/dashboard', options); break;
+            case 'ADMIN': navigate('/admin/dashboard', options); break;
+            default: navigate('/', options);
         }
     };
 

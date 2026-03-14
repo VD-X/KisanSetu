@@ -47,19 +47,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
     const [isLoading, setIsLoading] = useState(() => {
-        return !(localStorage.getItem('token') && localStorage.getItem('user'));
+        const hasLocalAuth = !!localStorage.getItem('token') && !!localStorage.getItem('user');
+        return !hasLocalAuth;
     });
 
     useEffect(() => {
         // Listen for Firebase auth state changes including token refreshes
         const unsubscribe = onIdTokenChanged(auth, async (fUser) => {
-            // Only toggle loading if we're not already optimistically authenticated
-            const hasLocalAuth = !!localStorage.getItem('token') && !!localStorage.getItem('user');
-            if (!hasLocalAuth) {
-                setIsLoading(true);
-            }
-
             if (fUser) {
+                // If we have fUser, we are definitely authenticated or in process
                 setFirebaseUser(fUser);
                 const idToken = await fUser.getIdToken();
                 setToken(idToken);

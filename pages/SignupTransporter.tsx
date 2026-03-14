@@ -13,7 +13,19 @@ const SignupTransporter = () => {
     const { t } = useRoleTranslate();
     const apiBase = API_URL;
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { user, login } = useAuth();
+
+    // Redirect if already authenticated
+    React.useEffect(() => {
+        if (user && user.role === 'TRANSPORTER') {
+            if (user.status === 'PENDING_APPROVAL') {
+                navigate('/transporter/pending-approval', { replace: true });
+            } else {
+                navigate('/transporter/dashboard', { replace: true });
+            }
+        }
+    }, [user, navigate]);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -99,10 +111,10 @@ const SignupTransporter = () => {
             }
 
             if (data.user.status === 'PENDING_APPROVAL') {
-                navigate('/transporter/pending-approval');
+                navigate('/transporter/pending-approval', { replace: true });
             } else {
                 login(data.token, data.user);
-                navigate('/transporter/dashboard');
+                navigate('/transporter/dashboard', { replace: true });
             }
 
         } catch (err: any) {

@@ -12,7 +12,15 @@ const SignupFarmer: React.FC = () => {
     const { t } = useRoleTranslate();
     const apiBase = API_URL;
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { user, login } = useAuth();
+    
+    // Redirect if already authenticated
+    React.useEffect(() => {
+        if (user) {
+            navigate('/farmer/dashboard', { replace: true });
+        }
+    }, [user, navigate]);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -92,7 +100,7 @@ const SignupFarmer: React.FC = () => {
 
             // 3. Update Auth Context and navigate
             login(data.token, data.user);
-            navigate('/farmer/dashboard');
+            navigate('/farmer/dashboard', { replace: true });
 
         } catch (err: any) {
             console.error('Signup error:', err);

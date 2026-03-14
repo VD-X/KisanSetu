@@ -1,10 +1,25 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useRoleTranslate } from '../hooks/useRoleTranslate';
 
 const RoleSelection = () => {
     const { t } = useRoleTranslate();
     const navigate = useNavigate();
+    const { user } = useAuth();
+
+    // Redirect if already authenticated
+    React.useEffect(() => {
+        if (user) {
+            switch (user.role) {
+                case 'FARMER': navigate('/farmer/dashboard', { replace: true }); break;
+                case 'BUYER': navigate('/buyer/dashboard', { replace: true }); break;
+                case 'TRANSPORTER': navigate('/transporter/dashboard', { replace: true }); break;
+                case 'ADMIN': navigate('/admin/dashboard', { replace: true }); break;
+                default: navigate('/', { replace: true });
+            }
+        }
+    }, [user, navigate]);
 
     const handleRoleSelect = (role: string) => {
         switch (role) {

@@ -12,7 +12,15 @@ const SignupBuyer = () => {
     const { t } = useRoleTranslate();
     const apiBase = API_URL;
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { user, login } = useAuth();
+
+    // Redirect if already authenticated
+    React.useEffect(() => {
+        if (user) {
+            navigate('/buyer/dashboard', { replace: true });
+        }
+    }, [user, navigate]);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -88,7 +96,7 @@ const SignupBuyer = () => {
             }
 
             login(data.token, data.user);
-            navigate('/buyer/dashboard');
+            navigate('/buyer/dashboard', { replace: true });
 
         } catch (err: any) {
             console.error('Signup error:', err);
